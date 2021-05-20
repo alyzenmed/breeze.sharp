@@ -43,10 +43,9 @@ namespace Breeze.Sharp {
       jNode.GetJNodeArray("navigationProperties").ForEach(jn => {
         var npName = GetPropertyNameFromJNode(jn);
         var np = et.GetNavigationProperty(npName);
-        if (np == null) {
-          throw new Exception($"Navigation Property {npName} not found on type {name}");
+        if (np != null) {
+          np.UpdateFromJNode(jn, isFromServer);
         }
-        np.UpdateFromJNode(jn, isFromServer);
       });
       et._validators = new ValidatorCollection(jNode.GetJNodeArray("validators"));
       // custom
