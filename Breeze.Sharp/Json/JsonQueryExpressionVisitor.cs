@@ -19,6 +19,7 @@ namespace Breeze.Sharp.Json {
     public string Where { get; private set; } = null;
     public List<string> Select { get; private set; } = null;
     public List<string> Expand { get; private set; } = null;
+    [JsonIgnore]
     public Dictionary<string, string> Parameters { get; private set; } = null;
 
     /// <summary> for building Where clause </summary>
@@ -40,6 +41,13 @@ namespace Breeze.Sharp.Json {
       };
 
       var json = JsonConvert.SerializeObject(visitor, Formatting.None, jsonSettings);
+
+      // Add parameters to json
+      if (visitor.Parameters?.Count > 0) {
+        foreach (var parameter in visitor.Parameters) {
+          json += "&" + parameter.Key + "=" + parameter.Value;
+        }
+      }
       return json;
     }
 
@@ -123,6 +131,14 @@ namespace Breeze.Sharp.Json {
         if (this.ParseOrderByExpression(m, "DESC")) {
           return this.Visit(m.Arguments[0]);
         }
+      } else if (methodName == "AddQueryOption") {
+        if (Parameters == null)
+          Parameters = new Dictionary<string, string>();
+
+        Parameters.Add(((ConstantExpression)m.Arguments[0]).Value.ToString(), ((ConstantExpression)m.Arguments[1]).Value.ToString());
+        var operand = ((UnaryExpression)m.Object).Operand;
+        this.Visit(operand);
+        return m;
       }
 
       throw new NotSupportedException(string.Format("The method '{0}' is not supported", methodName));
